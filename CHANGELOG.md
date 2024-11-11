@@ -1,5 +1,156 @@
 # Changelog
 
+## [0.11.2](https://github.com/Martichou/rquickshare/compare/v0.11.1...v0.11.2) (2024-08-21)
+
+
+### Bug Fixes
+
+* **ci:** upgrade (again) to googleapis/release-please-action ([52d3089](https://github.com/Martichou/rquickshare/commit/52d308989dd539fdfd92d63f8860523c9e1a500a))
+* display red circle if error/cancelled/rejected, [#128](https://github.com/Martichou/rquickshare/issues/128) ([f62b9c0](https://github.com/Martichou/rquickshare/commit/f62b9c09b672b287fde0e473dc1431b35a0969b8))
+* file picker different types returned ([50bc6c8](https://github.com/Martichou/rquickshare/commit/50bc6c80252fcd56632302bb82ffad6e7cd6d2de))
+
+## [0.11.1](https://github.com/Martichou/rquickshare/compare/v0.11.0...v0.11.1) (2024-08-14)
+
+
+### Bug Fixes
+
+* opening URL permission for main ([#165](https://github.com/Martichou/rquickshare/issues/165)) ([0b50082](https://github.com/Martichou/rquickshare/commit/0b50082faba6f1f3258873f378ef93802b0e480f))
+* **revert:** use old google-github-actions/release-please-action ([7584073](https://github.com/Martichou/rquickshare/commit/75840735825110ebbaf4701511b1a85b9dbc480c))
+
+## [0.11.0](https://github.com/Martichou/rquickshare/compare/v0.10.2...v0.11.0) (2024-08-13)
+
+
+### Features
+
+* add minimize on startup option ([e084c4b](https://github.com/Martichou/rquickshare/commit/e084c4b8ddd1cb3a67c09d8d72a54eec1382566c))
+* add toast notification if error while open_url ([4798d78](https://github.com/Martichou/rquickshare/commit/4798d78b7ae3d01a14c1ff61a4c68062f1566487))
+* rework app closing & quit & prevent ([cdcf5f3](https://github.com/Martichou/rquickshare/commit/cdcf5f31e3e5ac74277b32d705d3526c959f1e38))
+* rework texts's payload transfer info to frontend ([63464b3](https://github.com/Martichou/rquickshare/commit/63464b301e8cfe13ffe9740fab5f041bdda0eb32))
+* update core_lib to report text payload type ([3fd00c4](https://github.com/Martichou/rquickshare/commit/3fd00c46b4a5e86407dd2c051bbe86b6544ed6b7))
+
+
+### Bug Fixes
+
+* also open_detached in core_lib ([c35a06c](https://github.com/Martichou/rquickshare/commit/c35a06cc34fbb31589b29fda7244faf562df2fbd))
+* attempt to use open::detached for [#88](https://github.com/Martichou/rquickshare/issues/88) and [#91](https://github.com/Martichou/rquickshare/issues/91) ([22410f2](https://github.com/Martichou/rquickshare/commit/22410f24ae1195fd7ca05a76681b06215593704b))
+* attempt to use tauri's shell open ([fa63e82](https://github.com/Martichou/rquickshare/commit/fa63e823a4b96a8afe99f413b952e483e71ab7bf))
+* clippy error in main.rs(legacy) ([4e45096](https://github.com/Martichou/rquickshare/commit/4e450965ff54c65b64f7dd3b30c540560f72c63f))
+* import not found for ToastNotification ([a5e118a](https://github.com/Martichou/rquickshare/commit/a5e118ad66b990aecec85ad800dfd51272a44f83))
+* missing check for open ([b06431d](https://github.com/Martichou/rquickshare/commit/b06431d4d07cb8cfedbcddd0e5c2f34480a596e0))
+* rework vue_lib plugin ([e77f7cb](https://github.com/Martichou/rquickshare/commit/e77f7cb688de41d5a84bbb10f88f67be9158d61e))
+* vue_lib is not a lib anymore, I give up for now ([7c8ce74](https://github.com/Martichou/rquickshare/commit/7c8ce74d273bfe0efeb3e3590a46a6bac5e27df5))
+
+## [0.10.2](https://github.com/Martichou/rquickshare/compare/v0.10.1...v0.10.2) (2024-07-14)
+
+
+### Bug Fixes
+
+* also build x86 macos & update deps ([037100a](https://github.com/Martichou/rquickshare/commit/037100a7fb692e405734190e31f96fd7e1cffa1d))
+* legacy should not be built for macos ([9709c52](https://github.com/Martichou/rquickshare/commit/9709c52c26ab73fb07087e71a7ba0a6ab31c536a))
+
+## [0.10.1](https://github.com/Martichou/rquickshare/compare/v0.10.0...v0.10.1) (2024-07-08)
+
+
+### Bug Fixes
+
+* avoid click propagation when clicking child ([614bcbc](https://github.com/Martichou/rquickshare/commit/614bcbcdc63c771cbb2f513050f39d8aa703b7a1))
+* correctly remove device from list when sending ([758ada8](https://github.com/Martichou/rquickshare/commit/758ada81e30cc44ee92d985193a747bb1dc878b4))
+* **tauri:** add default (-) signing identity for macos ([44de621](https://github.com/Martichou/rquickshare/commit/44de621f0d752c78e60a94b5bdb3298355e1eff7))
+
+## [0.10.0](https://github.com/Martichou/rquickshare/compare/v0.9.0...v0.10.0) (2024-07-07)
+
+
+### Features
+
+* add new version notification ([4710dae](https://github.com/Martichou/rquickshare/commit/4710dae128608fd9d80abd23074920c63c1cf5ff))
+
+
+### Bug Fixes
+
+* blea use correct service_data ([121631c](https://github.com/Martichou/rquickshare/commit/121631cd5c60db8c711d2ee7eb9caa2c6bd5c2ef))
+* bluetooth advertisement is working now ([0a066d8](https://github.com/Martichou/rquickshare/commit/0a066d88169650ca83e7f2138f6b28861e2bb105))
+* set dbus to vendored for aarch64 ([#118](https://github.com/Martichou/rquickshare/issues/118)) ([5151f99](https://github.com/Martichou/rquickshare/commit/5151f999020ad64cc74eb9a3fa93a771627c6c66))
+
+## [0.9.0](https://github.com/Martichou/rquickshare/compare/v0.8.2...v0.9.0) (2024-07-04)
+
+
+### Features
+
+* 'finish' macos support ([efb5982](https://github.com/Martichou/rquickshare/commit/efb598260b64d4592a0fc85f4311617d8ee22e64))
+* add back name inside tray menu on v2 ([373460e](https://github.com/Martichou/rquickshare/commit/373460e0bbd7d1dc231a89e08e9df5df67390270))
+* add Tauri V2 codebase ([ba4f16f](https://github.com/Martichou/rquickshare/commit/ba4f16f2284f22b3ac8e5d72e85b38c77c05d7d0))
+* drag&drop working now ([3c97e6d](https://github.com/Martichou/rquickshare/commit/3c97e6dc25811dabddbae53623a285d8919a62d1))
+* migrate V1 codebase for V2 ([a3226fc](https://github.com/Martichou/rquickshare/commit/a3226fc43bdfba05e09993feffcb98f61d394a8e))
+* prepare for macos support ([2e7857c](https://github.com/Martichou/rquickshare/commit/2e7857c5d59045f6c216ec1eb2034a55fa2cc85c))
+* support notification on macos (no action) ([8a57a11](https://github.com/Martichou/rquickshare/commit/8a57a118bc70ea7d5eade3f20e419093782ff654))
+* TS migrated to Tauri V2 ([a286591](https://github.com/Martichou/rquickshare/commit/a286591d3b3250d989c8deae1be1d2ffb4f78ff1))
+
+
+### Bug Fixes
+
+* _id is not a field, use id :) ([3cce6b0](https://github.com/Martichou/rquickshare/commit/3cce6b0f5776145182fd70f2f263c0b3a176f398))
+* attempt to fix pnpm issue ([bc49f65](https://github.com/Martichou/rquickshare/commit/bc49f65b150202dfee7bc87745d6b95492c56cb4))
+* **ci:** debug upload name conflicted ([dacb7da](https://github.com/Martichou/rquickshare/commit/dacb7da43df4e4acf4bafa6e77de1c4fdace33dc))
+* display received file.s once finished ([505258c](https://github.com/Martichou/rquickshare/commit/505258c1aae1037e573487b314db03698dbc17ed))
+* fmt script go back to correct directory ([1e007db](https://github.com/Martichou/rquickshare/commit/1e007db8522c6fd761c492fa6e1a39b454e4701f))
+* improve sanity wait ([c595dcd](https://github.com/Martichou/rquickshare/commit/c595dcd099909bc87fdcf29b79fa85a0acae369d))
+* missing appindicator library pkg and fix glob for release ([5859434](https://github.com/Martichou/rquickshare/commit/585943473867dde3e34c5efd6c5f7c8e4aac4a8e))
+* release bundle rename ([1578081](https://github.com/Martichou/rquickshare/commit/15780810a9774f5940e906e8eb0a6179563b2058))
+* upload name duplicated ([20606d2](https://github.com/Martichou/rquickshare/commit/20606d2d0db215ddc6d5485c137c7998347ae941))
+* useless format and not used id ([ad08e9f](https://github.com/Martichou/rquickshare/commit/ad08e9f1900be6d1642f5853a3b36f7a664daea7))
+
+## [0.8.2](https://github.com/Martichou/rquickshare/compare/v0.8.1...v0.8.2) (2024-06-19)
+
+
+### Bug Fixes
+
+* prevent task from exiting if recv fails ([8b9d182](https://github.com/Martichou/rquickshare/commit/8b9d1824bfa7b70bef124218a56d024b9105903e))
+
+## [0.8.1](https://github.com/Martichou/rquickshare/compare/v0.8.0...v0.8.1) (2024-06-19)
+
+
+### Bug Fixes
+
+* release artifacts ([18b37b7](https://github.com/Martichou/rquickshare/commit/18b37b7b48389ef24272813230c8b1c111d6c09e))
+
+## [0.8.0](https://github.com/Martichou/rquickshare/compare/v0.7.1...v0.8.0) (2024-06-19)
+
+
+### Features
+
+* configure logging level with config file ([#104](https://github.com/Martichou/rquickshare/issues/104)) ([5712b3b](https://github.com/Martichou/rquickshare/commit/5712b3b7acc12030c105d93e56b51da4cbf00dbd))
+
+
+### Bug Fixes
+
+* add desktop plugs to snapcraft ([#80](https://github.com/Martichou/rquickshare/issues/80)) ([7f3dbac](https://github.com/Martichou/rquickshare/commit/7f3dbaca8d3a7a5d8625a06cdab26650c323a0c2))
+* ensure correct service_data before notifying ([4027cbe](https://github.com/Martichou/rquickshare/commit/4027cbec12341ba6c4aa3ba54439266a48db069f))
+* improve logging and allow to configure (env) ([1084079](https://github.com/Martichou/rquickshare/commit/10840791ec3dc4224112795771633b48202da470))
+* index.ts is sorted now ([42c84d2](https://github.com/Martichou/rquickshare/commit/42c84d2675c158a3537a67d05928df1b7dc27a8b))
+* make the app feel like 'real' ([3ae1396](https://github.com/Martichou/rquickshare/commit/3ae1396f05cd9e97e3775adc46b9c2b204ff2104))
+
+## [0.7.1](https://github.com/Martichou/rquickshare/compare/v0.7.0...v0.7.1) (2024-05-01)
+
+
+### Bug Fixes
+
+* auto snap version ([8bab368](https://github.com/Martichou/rquickshare/commit/8bab368660acba9e39c5ddfba7120db15ee4024b))
+
+## [0.7.0](https://github.com/Martichou/rquickshare/compare/v0.6.0...v0.7.0) (2024-05-01)
+
+
+### Features
+
+* add outbound progress ([#69](https://github.com/Martichou/rquickshare/issues/69)) ([4db4383](https://github.com/Martichou/rquickshare/commit/4db43835c5557077bcb60b91d3a9f2da2245b5db))
+
+## [0.6.0](https://github.com/Martichou/rquickshare/compare/v0.5.0...v0.6.0) (2024-04-29)
+
+
+### Features
+
+* add incoming transfer progress ([#47](https://github.com/Martichou/rquickshare/issues/47)) ([f154e90](https://github.com/Martichou/rquickshare/commit/f154e9099ad720101b9d100e52bf9dd3ca87af1a))
+* add option to change destination folder ([#60](https://github.com/Martichou/rquickshare/issues/60)) ([7091df0](https://github.com/Martichou/rquickshare/commit/7091df078c3dfe4424dc9217dbdfb15d10a29a6b))
+
 ## [0.5.0](https://github.com/Martichou/rquickshare/compare/v0.4.1...v0.5.0) (2024-04-02)
 
 

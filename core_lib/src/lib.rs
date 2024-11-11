@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use anyhow::anyhow;
 use channel::ChannelMessage;
-#[cfg(feature = "experimental")]
+#[cfg(all(feature = "experimental", target_os = "linux"))]
 use hdl::BleAdvertiser;
 use hdl::MDnsDiscovery;
 use once_cell::sync::Lazy;
@@ -157,15 +157,15 @@ impl RQS {
         &mut self,
         sender: broadcast::Sender<EndpointInfo>,
     ) -> Result<(), anyhow::Error> {
-        let tracker = match &self.tracker {
-            Some(t) => t,
-            None => return Err(anyhow!("The service wasn't first started")),
-        };
+        let tracker = self
+            .tracker
+            .as_ref()
+            .ok_or_else(|| anyhow!("The service wasn't first started"))?;
 
         let ctk = CancellationToken::new();
         self.discovery_ctk = Some(ctk.clone());
 
-        #[cfg(feature = "experimental")]
+        #[cfg(all(feature = "experimental", target_os = "linux"))]
         {
             let ctk_blea = ctk.clone();
             tracker.spawn(async move {

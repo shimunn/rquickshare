@@ -10,9 +10,9 @@ use crate::utils::RemoteDeviceInfo;
 
 mod ble;
 pub use ble::*;
-#[cfg(feature = "experimental")]
+#[cfg(all(feature = "experimental", target_os = "linux"))]
 mod blea;
-#[cfg(feature = "experimental")]
+#[cfg(all(feature = "experimental", target_os = "linux"))]
 pub use blea::*;
 mod inbound;
 pub use inbound::*;
@@ -62,7 +62,6 @@ pub struct InnerState {
     pub pin_code: Option<String>,
     pub transfer_metadata: Option<TransferMetadata>,
     pub transferred_files: HashMap<i64, InternalFileInfo>,
-    pub bytes_to_send: u64,
 
     // Everything needed for encryption/decryption/verif
     pub cipher_commitment: Option<CipherCommitment>,
@@ -89,6 +88,13 @@ pub enum TextPayloadInfo {
     Url(i64),
     Text(i64),
     Wifi((i64, String)),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub enum TextPayloadType {
+    Url,
+    Text,
+    Wifi,
 }
 
 impl TextPayloadInfo {

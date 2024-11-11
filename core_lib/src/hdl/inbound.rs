@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::os::unix::fs::FileExt;
+use std::time::Duration;
 
 use anyhow::anyhow;
-use arboard::Clipboard;
 use bytes::Bytes;
 use hmac::{Hmac, Mac};
 use libaes::{Cipher, AES_256_KEY_LEN};
@@ -19,7 +19,7 @@ use tokio::sync::broadcast::{Receiver, Sender};
 use super::{InnerState, State};
 use crate::channel::{ChannelAction, ChannelDirection, ChannelMessage};
 use crate::hdl::info::{InternalFileInfo, TransferMetadata};
-use crate::hdl::TextPayloadInfo;
+use crate::hdl::{TextPayloadInfo, TextPayloadType};
 use crate::location_nearby_connections::payload_transfer_frame::{
     payload_header, PacketType, PayloadChunk, PayloadHeader,
 };
@@ -43,6 +43,7 @@ use crate::{location_nearby_connections, sharing_nearby};
 type HmacSha256 = Hmac<Sha256>;
 
 const SANE_FRAME_LENGTH: i32 = 5 * 1024 * 1024;
+const SANITY_DURATION: Duration = Duration::from_micros(10);
 
 #[derive(Debug)]
 pub struct InboundRequest {
@@ -98,7 +99,7 @@ impl InboundRequest {
                                         e.state = State::Rejected;
                                     },
                                     true,
-                                );
+                                ).await;
 
                                 self.reject_transfer(Some(
                                     sharing_nearby::connection_response_frame::Status::Reject
@@ -111,7 +112,7 @@ impl InboundRequest {
                                         e.state = State::Cancelled;
                                     },
                                     true,
-                                );
+                                ).await;
                                 self.disconnection().await?;
                                 return Err(anyhow!(crate::errors::AppError::NotAnError));
                             },
@@ -163,7 +164,8 @@ impl InboundRequest {
                         e.remote_device_info = Some(rdi);
                     },
                     false,
-                );
+                )
+                .await;
             }
             State::ReceivedConnectionRequest => {
                 debug!("Handling State::ReceivedConnectionRequest frame");
@@ -176,7 +178,8 @@ impl InboundRequest {
                         e.client_init_msg_data = Some(frame_data);
                     },
                     false,
-                );
+                )
+                .await;
             }
             State::SentUkeyServerInit => {
                 debug!("Handling State::SentUkeyServerInit frame");
@@ -188,7 +191,8 @@ impl InboundRequest {
                         e.state = State::ReceivedUkeyClientFinish;
                     },
                     false,
-                );
+                )
+                .await;
             }
             State::ReceivedUkeyClientFinish => {
                 debug!("Handling State::ReceivedUkeyClientFinish frame");
@@ -200,7 +204,8 @@ impl InboundRequest {
                         e.state = State::SentConnectionResponse;
                     },
                     false,
-                );
+                )
+                .await;
             }
             _ => {
                 debug!("Handling SecureMessage frame");
@@ -303,7 +308,8 @@ impl InboundRequest {
                         e.cipher_commitment = Some(commitment.clone());
                     },
                     false,
-                );
+                )
+                .await;
                 break;
             }
         }
@@ -356,7 +362,8 @@ impl InboundRequest {
                 e.server_init_data = Some(server_init_data.clone());
             },
             false,
-        );
+        )
+        .await;
 
         self.send_frame(server_init_data).await?;
 
@@ -400,7 +407,7 @@ impl InboundRequest {
             }
         };
 
-        self.finalize_key_exchange(client_public_key)?;
+        self.finalize_key_exchange(client_public_key).await?;
 
         Ok(())
     }
@@ -483,7 +490,7 @@ impl InboundRequest {
 
         let d2d_msg = DeviceToDeviceMessage::decode(&*decrypted)?;
 
-        let seq = self.get_client_seq_inc();
+        let seq = self.get_client_seq_inc().await;
         if d2d_msg.sequence_number() != seq {
             return Err(anyhow!(
                 "Error d2d_msg.sequence_number invalid ({} vs {})",
@@ -562,51 +569,41 @@ impl InboundRequest {
 
                                 match self.state.text_payload.clone().unwrap() {
                                     TextPayloadInfo::Url(_) => {
-                                        if let Err(e) = open::that(&payload) {
-                                            error!("Cannot open URL: {e}");
-                                        }
-
                                         self.update_state(
                                             |e| {
                                                 if let Some(tmd) = e.transfer_metadata.as_mut() {
                                                     tmd.text_payload = Some(payload);
+                                                    tmd.text_type = Some(TextPayloadType::Url);
                                                 }
                                             },
                                             false,
-                                        );
+                                        )
+                                        .await;
                                     }
                                     TextPayloadInfo::Text(_) => {
-                                        let mut ctx = Clipboard::new().unwrap();
-
-                                        let tp = match ctx.set_text(payload.clone()) {
-                                            Ok(_) => String::from("Copied to clipboard"),
-                                            Err(e) => {
-                                                error!("Cannot copy to cliboard: {e}");
-                                                payload
-                                            }
-                                        };
-
                                         self.update_state(
                                             |e| {
                                                 if let Some(tmd) = e.transfer_metadata.as_mut() {
-                                                    tmd.text_payload = Some(tp);
+                                                    tmd.text_payload = Some(payload);
+                                                    tmd.text_type = Some(TextPayloadType::Text);
                                                 }
                                             },
                                             false,
-                                        );
+                                        )
+                                        .await;
                                     }
                                     TextPayloadInfo::Wifi((_, ssid)) => {
                                         self.update_state(
                                             |e| {
                                                 if let Some(tmd) = e.transfer_metadata.as_mut() {
-                                                    tmd.text_payload = Some(format!(
-                                                        "{ssid} : {}",
-                                                        payload.trim().to_owned()
-                                                    ));
+                                                    tmd.text_payload =
+                                                        Some(format!("{ssid}: {}", payload.trim()));
+                                                    tmd.text_type = Some(TextPayloadType::Wifi);
                                                 }
                                             },
                                             false,
-                                        );
+                                        )
+                                        .await;
                                     }
                                 }
 
@@ -615,7 +612,8 @@ impl InboundRequest {
                                         e.state = State::Finished;
                                     },
                                     true,
-                                );
+                                )
+                                .await;
                                 self.disconnection().await?;
                                 return Err(anyhow!(crate::errors::AppError::NotAnError));
                             } else {
@@ -645,9 +643,11 @@ impl InboundRequest {
                                 current_offset
                             ));
                         }
-                        if current_offset + chunk.body().len() as i64 > file_internal.total_size {
+
+                        let chunk_size = chunk.body().len();
+                        if current_offset + chunk_size as i64 > file_internal.total_size {
                             return Err(anyhow!(
-                                "Transferred file size exceeds previously specified value: {} vs {}", current_offset + chunk.body().len() as i64, file_internal.total_size
+                                "Transferred file size exceeds previously specified value: {} vs {}", current_offset + chunk_size as i64, file_internal.total_size
                             ));
                         }
 
@@ -657,7 +657,17 @@ impl InboundRequest {
                                 .as_ref()
                                 .unwrap()
                                 .write_all_at(chunk.body(), current_offset as u64)?;
-                            file_internal.bytes_transferred += chunk.body().len() as i64;
+                            file_internal.bytes_transferred += chunk_size as i64;
+
+                            self.update_state(
+                                |e| {
+                                    if let Some(tmd) = e.transfer_metadata.as_mut() {
+                                        tmd.ack_bytes += chunk_size as u64;
+                                    }
+                                },
+                                true,
+                            )
+                            .await;
                         } else if (chunk.flags() & 1) == 1 {
                             self.state.transferred_files.remove(&payload_id);
                             if self.state.transferred_files.is_empty() {
@@ -667,7 +677,8 @@ impl InboundRequest {
                                         e.state = State::Finished;
                                     },
                                     true,
-                                );
+                                )
+                                .await;
                                 self.disconnection().await?;
                                 return Err(anyhow!(crate::errors::AppError::NotAnError));
                             }
@@ -709,10 +720,11 @@ impl InboundRequest {
             info!("Transfer canceled");
             self.update_state(
                 |e| {
-                    e.state = State::Disconnected;
+                    e.state = State::Cancelled;
                 },
                 true,
-            );
+            )
+            .await;
             self.disconnection().await?;
             return Err(anyhow!(crate::errors::AppError::NotAnError));
         }
@@ -726,7 +738,8 @@ impl InboundRequest {
                         e.state = State::SentPairedKeyResult;
                     },
                     false,
-                );
+                )
+                .await;
             }
             State::SentPairedKeyResult => {
                 debug!("Processing State::SentPairedKeyResult");
@@ -736,7 +749,8 @@ impl InboundRequest {
                         e.state = State::ReceivedPairedKeyResult;
                     },
                     false,
-                );
+                )
+                .await;
             }
             State::ReceivedPairedKeyResult => {
                 debug!("Processing State::ReceivedPairedKeyResult");
@@ -803,11 +817,13 @@ impl InboundRequest {
                 e.state = State::WaitingForUserConsent;
             },
             false,
-        );
+        )
+        .await;
 
         if !introduction.file_metadata.is_empty() && introduction.text_metadata.is_empty() {
             trace!("process_introduction: handling file_metadata");
             let mut files_name = Vec::with_capacity(introduction.file_metadata.len());
+            let mut total_bytes: u64 = 0;
 
             for file in &introduction.file_metadata {
                 info!("File name: {}", file.name());
@@ -839,6 +855,7 @@ impl InboundRequest {
                     total_size: file.size(),
                     file: None,
                 };
+                total_bytes += info.total_size as u64;
                 self.state.transferred_files.insert(file.payload_id(), info);
                 files_name.push(file.name().to_owned());
             }
@@ -855,16 +872,18 @@ impl InboundRequest {
                 files: Some(files_name),
                 pin_code: self.state.pin_code.clone(),
                 text_description: None,
+                total_bytes,
                 ..Default::default()
             };
 
             info!("Asking for user consent: {:?}", metadata);
             self.update_state(
                 |e| {
-                    e.transfer_metadata = Some(metadata.clone());
+                    e.transfer_metadata = Some(metadata);
                 },
                 true,
-            );
+            )
+            .await;
         } else if introduction.text_metadata.len() == 1 {
             trace!("process_introduction: handling text_metadata");
             let meta = introduction.text_metadata.first().unwrap();
@@ -885,10 +904,11 @@ impl InboundRequest {
                     self.update_state(
                         |e| {
                             e.text_payload = Some(TextPayloadInfo::Url(meta.payload_id()));
-                            e.transfer_metadata = Some(metadata.clone());
+                            e.transfer_metadata = Some(metadata);
                         },
                         true,
-                    );
+                    )
+                    .await;
                 }
                 text_metadata::Type::PhoneNumber
                 | text_metadata::Type::Address
@@ -907,10 +927,11 @@ impl InboundRequest {
                     self.update_state(
                         |e| {
                             e.text_payload = Some(TextPayloadInfo::Text(meta.payload_id()));
-                            e.transfer_metadata = Some(metadata.clone());
+                            e.transfer_metadata = Some(metadata);
                         },
                         true,
-                    );
+                    )
+                    .await;
                 }
                 text_metadata::Type::Unknown => {
                     // Reject transfer
@@ -940,10 +961,11 @@ impl InboundRequest {
                         meta.payload_id(),
                         meta.ssid().to_owned(),
                     )));
-                    e.transfer_metadata = Some(metadata.clone());
+                    e.transfer_metadata = Some(metadata);
                 },
                 true,
-            );
+            )
+            .await;
         } else {
             // Reject transfer
             self.reject_transfer(Some(
@@ -1005,7 +1027,8 @@ impl InboundRequest {
                 e.state = State::ReceivingFiles;
             },
             true,
-        );
+        )
+        .await;
 
         Ok(())
     }
@@ -1036,7 +1059,7 @@ impl InboundRequest {
         Ok(())
     }
 
-    fn finalize_key_exchange(
+    async fn finalize_key_exchange(
         &mut self,
         raw_peer_key: GenericPublicKey,
     ) -> Result<(), anyhow::Error> {
@@ -1100,7 +1123,8 @@ impl InboundRequest {
                 e.encryption_done = true;
             },
             false,
-        );
+        )
+        .await;
 
         info!("Pin code: {:?}", self.state.pin_code);
 
@@ -1192,7 +1216,7 @@ impl InboundRequest {
 
     async fn encrypt_and_send(&mut self, frame: &OfflineFrame) -> Result<(), anyhow::Error> {
         let d2d_msg = DeviceToDeviceMessage {
-            sequence_number: Some(self.get_server_seq_inc()),
+            sequence_number: Some(self.get_server_seq_inc().await),
             message: Some(frame.encode_to_vec()),
         };
 
@@ -1273,29 +1297,31 @@ impl InboundRequest {
         Ok(())
     }
 
-    fn get_server_seq_inc(&mut self) -> i32 {
+    async fn get_server_seq_inc(&mut self) -> i32 {
         self.update_state(
             |e| {
                 e.server_seq += 1;
             },
             false,
-        );
+        )
+        .await;
 
         self.state.server_seq
     }
 
-    fn get_client_seq_inc(&mut self) -> i32 {
+    async fn get_client_seq_inc(&mut self) -> i32 {
         self.update_state(
             |e| {
                 e.client_seq += 1;
             },
             false,
-        );
+        )
+        .await;
 
         self.state.client_seq
     }
 
-    fn update_state<F>(&mut self, f: F, inform: bool)
+    async fn update_state<F>(&mut self, f: F, inform: bool)
     where
         F: FnOnce(&mut InnerState),
     {
@@ -1305,6 +1331,7 @@ impl InboundRequest {
             return;
         }
 
+        trace!("Sending msg into the channel");
         let _ = self.sender.send(ChannelMessage {
             id: self.state.id.clone(),
             direction: ChannelDirection::LibToFront,
@@ -1313,5 +1340,9 @@ impl InboundRequest {
             meta: self.state.transfer_metadata.clone(),
             ..Default::default()
         });
+        // Add a small sleep timer to allow the Tokio runtime to have
+        // some spare time to process channel's message. Otherwise it
+        // get spammed by new requests. Currently set to 10 micro secs.
+        tokio::time::sleep(SANITY_DURATION).await;
     }
 }
