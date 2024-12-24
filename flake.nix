@@ -46,8 +46,10 @@
               protobuf
               jq
               yq
+	      pkg-config
               rustPlatform.cargoSetupHook
-            ];
+            ] ++ openssl.nativeBuildInputs;
+	    buildInputs = [ openssl webkitgtk_4_1 gtk3 cairo gdk-pixbuf glib dbus libsoup_3 libayatana-appindicator ];
             # seemingly the fetcher ignores cargoRoot (contrary to the docs)
             cargoDeps = rustPlatform.fetchCargoVendor {
               inherit src pname;
